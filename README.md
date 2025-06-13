@@ -11,7 +11,7 @@ I'm passionate about cybersecurity and love tackling complex challenges through 
 ## 🚨 Threat Hunting and Security Operations
 
 - **[Threat Hunting Scenario (Tor Browser Usage)](https://github.com/AdoizaMusa/threat-hunting-scenario-tor)**
-## 🚨 https://github.com/AdoizaMusa/Devices-Accidentally-Exposed-to-the-Internet
+## 🚨 Devices-Accidentally-Exposed-to-the-Internet
 <hr/>
 
 ## 🤳 Connect With Me
