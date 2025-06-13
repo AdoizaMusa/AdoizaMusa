@@ -11,7 +11,6 @@ I'm passionate about cybersecurity and love tackling complex challenges through 
 ## 🚨 Threat Hunting and Security Operations
 
 - **[Threat Hunting Scenario (Tor Browser Usage)](https://github.com/AdoizaMusa/threat-hunting-scenario-tor)**
-  ** Suspected-Data-Exfiltration-from-PIPd-Employee
 <hr/>
 
 ## 🤳 Connect With Me
