@@ -24,7 +24,7 @@
     PS C:\> .\__remediation_template(STIG-ID-WN10-AU-000500).ps1 
 #>
 
-# YOUR CODE GOES HERE# Run as Administrator
+ Run as Administrator
 
 # Get all local users (enabled accounts) and set PasswordNeverExpires = $false
 Get-LocalUser |
