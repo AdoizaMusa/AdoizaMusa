@@ -1,0 +1,113 @@
+<#
+<#
+.SYNOPSIS
+    This PowerShell script was used to Remediate vulnerabilty by unistalling outdated Firefox Software
+
+.NOTES
+    Author          : Adoiza Musa
+    LinkedIn        : https://www.linkedin.com/in/adoizamusa 
+    GitHub          : https://github.com/AdoizaMusa
+    Date Created    : 2025-11-08
+    Last Modified   : 2025-11-08
+    Version         : 1.3
+    CVEs            : 8.8
+    Plugin IDs      : 172515
+    STIG-ID         : N/A
+
+.TESTED ON
+    Date(s) Tested  : 
+    Tested By       : 
+    Systems Tested  : 
+    PowerShell Ver. : 
+
+.USAGE
+    Put any usage instructions here.
+    Example syntax:
+    PS C:\> .\__remediation_template(STIG-ID-WN10-AU-000500).ps1 
+#
+.SYNOPSIS
+  Uninstalls Mozilla Firefox from Windows (32-bit or 64-bit).
+
+.DESCRIPTION
+  This script looks up the Firefox uninstall string in the registry and executes it silently if available.
+  Works on Windows 10/11. Requires Administrator privileges.
+
+.EXAMPLE
+  .\Uninstall-Firefox.ps1
+#>
+
+# Ensure script runs elevated
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Host "⚠️  Please run this script as Administrator." -ForegroundColor Yellow
+    exit
+}
+
+Write-Host "🔍 Searching for Mozilla Firefox uninstall information..." -ForegroundColor Cyan
+
+# Registry paths to check
+$UninstallKeys = @(
+    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+    "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+)
+
+$FirefoxEntries = @()
+
+foreach ($key in $UninstallKeys) {
+    try {
+        $apps = Get-ChildItem $key -ErrorAction SilentlyContinue | ForEach-Object {
+            Get-ItemProperty $_.PsPath -ErrorAction SilentlyContinue
+        } | Where-Object { $_.DisplayName -match "Firefox" }
+
+        if ($apps) { $FirefoxEntries += $apps }
+    } catch {}
+}
+
+if ($FirefoxEntries.Count -eq 0) {
+    Write-Host "❌ Firefox is not detected on this system." -ForegroundColor Red
+    exit
+}
+
+foreach ($entry in $FirefoxEntries) {
+    Write-Host "`nFound:" -ForegroundColor Green
+    Write-Host " - Display Name : $($entry.DisplayName)"
+    Write-Host " - Version      : $($entry.DisplayVersion)"
+    Write-Host " - UninstallStr : $($entry.UninstallString)"
+
+    $uninstallCmd = $entry.UninstallString
+
+    if (-not $uninstallCmd) {
+        Write-Host "⚠️  No uninstall command found for this entry." -ForegroundColor Yellow
+        continue
+    }
+
+    # If it's MSI-based, handle accordingly
+    if ($uninstallCmd -match "MsiExec") {
+        if ($uninstallCmd -notmatch "/x") {
+            Write-Host "⚙️  Adjusting MSI command..." -ForegroundColor Cyan
+            $uninstallCmd = $uninstallCmd + " /x"
+        }
+        if ($uninstallCmd -notmatch "/qn") {
+            $uninstallCmd = $uninstallCmd + " /qn /norestart"
+        }
+    } 
+    else {
+        # If it's an EXE uninstaller, add silent flag
+        if ($uninstallCmd -notmatch "/S") {
+            $uninstallCmd = $uninstallCmd + " /S"
+        }
+    }
+
+    Write-Host "🚀 Running uninstall command:" -ForegroundColor Cyan
+    Write-Host "    $uninstallCmd"
+
+    try {
+        Start-Process -FilePath "cmd.exe" -ArgumentList "/c $uninstallCmd" -Wait -NoNewWindow
+        Write-Host "✅ Firefox has been uninstalled (if it was installed in that location)." -ForegroundColor Green
+    }
+    catch {
+        Write-Host "❌ Failed to run uninstall command: $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
+Write-Host "`n🧹 Uninstallation process complete. You may restart your VM to finalize cleanup." -ForegroundColor Cyan
